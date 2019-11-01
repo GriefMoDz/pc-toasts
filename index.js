@@ -23,7 +23,8 @@ module.exports = class Toasts extends Plugin {
     // placeholder toast for testing purposes
     this.sendToast({
       id: 'placeholder',
-      header: 'You\'ve got mail!',
+      header: 'Updates are Available!',
+      type: 'info',
       content: 'Some plug-ins require your attention. Open "Updater" to find out more!',
       buttons: [ {
         text: 'Update Now!',

@@ -1,5 +1,5 @@
 const { React, getModule, getModuleByDisplayName } = require('powercord/webpack');
-const { AsyncComponent } = require('powercord/components');
+const { AsyncComponent, Tooltip } = require('powercord/components');
 
 const Clickable = AsyncComponent.from(getModuleByDisplayName('Clickable'));
 
@@ -13,13 +13,20 @@ Object.assign(exports, {
 })();
 
 /* eslint-disable multiline-ternary */
-module.exports = class Toast extends React.PureComponent {
+const Toast = class Toast extends React.PureComponent {
   constructor (props) {
     super(props);
 
     this.main = props.main;
     this.state = {
       leaving: false
+    };
+
+    this.styles = {
+      regular: 'r',
+      light: 'l',
+      duotone: 'd',
+      brands: 'b'
     };
   }
 
@@ -30,12 +37,29 @@ module.exports = class Toast extends React.PureComponent {
     return (
       <div
         className={[ 'powercord-toast', state.leaving ? 'leaving' : '' ].filter(Boolean).join(' ')}
+        data-toast-type={this.props.type || 'info'}
         style={this.props.style}
       >
         {this.props.header && (
           <div className='header'>
-            <div className='fad fa-info-circle fa-fw' style={{ marginRight: '5px' }} />
+            {this.props.icon !== false && (
+              <Tooltip
+                text={`Type: ${this.props.type
+                  ? this.props.type.replace(/\w\S*/g, (text) => text.charAt(0).toUpperCase() + text.substr(1).toLowerCase())
+                  : 'Info'
+                }`}
+                position='left'
+              >
+                <div className='icon'>
+                  {this.props.image ? this.getHeaderImage() : this.props.icon
+                    ? this.getHeaderIcon()
+                    : <div className={`fad fa-${this.props.type ? Toast.Types[(this.props.type).toUpperCase()] : Toast.Types.INFO} fa-fw`} />}
+                </div>
+              </Tooltip>
+            )}
+
             {this.props.header}
+
             <Clickable
               className='dismiss'
               onClick={() => {
@@ -46,7 +70,7 @@ module.exports = class Toast extends React.PureComponent {
           </div>
         )}
 
-        {(this.props.content || this.props.buttons.filter(Boolean).length > 0) && (
+        {(this.props.content || (this.props.buttons && this.props.buttons.filter(Boolean).length > 0)) && (
           <div className='body'>
             {this.props.content && (
               <div className='content'>
@@ -88,6 +112,25 @@ module.exports = class Toast extends React.PureComponent {
     );
   }
 
+  getHeaderImage () {
+    return <img alt='' className={[ this.props.imageClassName || null ].filter(Boolean).join(' ')}
+      src={this.props.image} />;
+  }
+
+  getHeaderIcon () {
+    const styleRegex = new RegExp(/[a-z]+(?!.*-)/);
+    const style = Object.keys(this.styles).find(style => style === this.props.icon.split(' ')[0].match(styleRegex)[0]);
+    const icon = `fa-${this.props.icon.replace(`-${style}`, '')} fa-fw`;
+
+    let prefix = 'fas';
+
+    if (this.styles[style]) {
+      prefix = `fa${this.styles[style]}`;
+    }
+
+    return <div className={`${prefix} ${icon}`} />;
+  }
+
   getButtonStyle (button) {
     let { style } = button;
     const { isValidHex } = getModule([ 'hex2rgb' ], false);
@@ -114,3 +157,12 @@ module.exports = class Toast extends React.PureComponent {
     return style;
   }
 };
+
+Toast.Types = {
+  INFO: 'info-square',
+  WARNING: 'exclamation-square',
+  DANGER: 'times-square',
+  SUCCESS: 'check-square'
+};
+
+module.exports = Toast;
